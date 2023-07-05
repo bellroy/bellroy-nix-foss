@@ -39,6 +39,7 @@ inputs.flake-utils.lib.eachDefaultSystem (system:
       haskellPackages.cabal-fmt
       cabal2nix
       miniserve
+      haskell-ci
     ];
 
     makeShell = haskellPackages: (makePackageSet haskellPackages).shellFor {
