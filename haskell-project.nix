@@ -17,22 +17,33 @@ inputs:
   # Extra tools to include in the shell. This is a function that takes nixpkgs
   # as the argument and returns a list of packages.
 , extraTools ? nixpkgs: [ ]
+, haskellPackagesOverride ? { compilerName, final, prev }: { }
 }:
 inputs.flake-utils.lib.eachDefaultSystem (system:
   let
     nixpkgs = import inputs.nixpkgs { inherit system; };
 
-    makePackageSet = haskellPackages: haskellPackages.override {
-      overrides = final: prev: with nixpkgs.haskell.lib;
-        builtins.listToAttrs
-          (
-            builtins.map
-              (cabalPackage: {
-                name = cabalPackage.name;
-                value = prev.callPackage cabalPackage.path { };
-              })
-              cabalPackages
-          );
+    makePackageSet = compilerName: haskellPackages: haskellPackages.override {
+      overrides = final: prev:
+        let
+          projectPackages =
+            builtins.listToAttrs
+              (
+                builtins.map
+                  (cabalPackage: {
+                    name = cabalPackage.name;
+                    value = prev.callPackage cabalPackage.path { };
+                  })
+                  cabalPackages
+              );
+          overridenDependencies = haskellPackagesOverride {
+            inherit compilerName;
+            haskellLib = nixpkgs.haskell.lib;
+            inherit final;
+            inherit prev;
+          };
+        in
+        projectPackages // overridenDependencies;
     };
 
     essentialTools = with nixpkgs; [
@@ -46,7 +57,7 @@ inputs.flake-utils.lib.eachDefaultSystem (system:
       miniserve
     ] ++ extraTools nixpkgs;
 
-    makeShell = haskellPackages: (makePackageSet haskellPackages).shellFor {
+    makeShell = compilerName: haskellPackages: (makePackageSet compilerName haskellPackages).shellFor {
       packages = p: builtins.map (cabalPackage: p.${cabalPackage.name}) cabalPackages;
       withHoogle = true;
       buildInputs = essentialTools ++ [
@@ -65,7 +76,7 @@ inputs.flake-utils.lib.eachDefaultSystem (system:
           (
             builtins.concatMap
               (compilerName:
-                let pkgSet = makePackageSet nixpkgs.haskell.packages.${compilerName};
+                let pkgSet = makePackageSet compilerName nixpkgs.haskell.packages.${compilerName};
                 in
                 builtins.map
                   (cabalPackage: {
