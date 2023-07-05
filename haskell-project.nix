@@ -13,7 +13,10 @@ inputs:
   # Valid values are keys of haskell.compiler in nixpkgs.
 , supportedCompilers
   # Default compiler version to choose. Must be one of the supportedCompilers.
-, defaultCompiler
+, defaultCompiler ? builtins.head supportedCompilers
+  # Extra tools to include in the shell. This is a function that takes nixpkgs
+  # as the argument and returns a list of packages.
+, extraTools ? nixpkgs: [ ]
 }:
 inputs.flake-utils.lib.eachDefaultSystem (system:
   let
@@ -35,11 +38,13 @@ inputs.flake-utils.lib.eachDefaultSystem (system:
     essentialTools = with nixpkgs; [
       cabal-install
       hlint
+      nixpkgs-fmt
       ormolu
       haskellPackages.cabal-fmt
       cabal2nix
+      haskell-ci
       miniserve
-    ];
+    ] ++ extraTools nixpkgs;
 
     makeShell = haskellPackages: (makePackageSet haskellPackages).shellFor {
       packages = p: builtins.map (cabalPackage: p.${cabalPackage.name}) cabalPackages;
