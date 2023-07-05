@@ -1,13 +1,13 @@
 inputs:
 {
-  #  A list of packages in the project.
-  #  Example:
-  #    [
-  #      {
-  #        name = "timeline";
-  #        path = ./package.nix;
-  #      }
-  #    ]
+  # A list of packages in the project.
+  # Example:
+  #   [
+  #     {
+  #       name = "timeline";
+  #       path = ./package.nix;
+  #     }
+  #   ]
   cabalPackages
   # A list of compiler versions supported in the project.
   # Valid values are keys of haskell.compiler in nixpkgs.
