@@ -103,7 +103,7 @@ inputs.flake-utils.lib.eachDefaultSystem (system:
             builtins.map
               (compilerName: {
                 name = compilerName;
-                value = makeShell nixpkgs.haskell.packages.${compilerName};
+                value = makeShell compilerName nixpkgs.haskell.packages.${compilerName};
               })
               supportedCompilers
           ); in
