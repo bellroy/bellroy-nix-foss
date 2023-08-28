@@ -17,7 +17,7 @@ inputs:
   # Extra tools to include in the shell. This is a function that takes nixpkgs
   # as the argument and returns a list of packages.
 , extraTools ? nixpkgs: [ ]
-, haskellPackagesOverride ? { compilerName, final, prev }: { }
+, haskellPackagesOverride ? { compilerName, haskellLib, final, prev }: { }
 }:
 inputs.flake-utils.lib.eachDefaultSystem (system:
   let
