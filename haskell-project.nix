@@ -62,6 +62,7 @@ inputs.flake-utils.lib.eachDefaultSystem (system:
       withHoogle = true;
       buildInputs = essentialTools ++ [
         nixpkgs.haskellPackages.haskell-language-server
+        haskellPackages.ghcid
       ];
     };
 
