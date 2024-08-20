@@ -34,13 +34,29 @@
         "type": "github"
       }
     },
+    "haskell-ci": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1720460048,
+        "narHash": "sha256-k3YCC4RIVxocXYbNHkmGYvlsoFlv5XZmk1DYfVQMaPs=",
+        "owner": "haskell-ci",
+        "repo": "haskell-ci",
+        "rev": "5e5b27d74f90e73905c4f56f4aefe521f97879f0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "haskell-ci",
+        "repo": "haskell-ci",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1719082008,
-        "narHash": "sha256-jHJSUH619zBQ6WdC21fFAlDxHErKVDJ5fpN0Hgx4sjs=",
+        "lastModified": 1724047581,
+        "narHash": "sha256-BypLrnMS2QvvdVhwWixppTOM3fLPC8eyJse0BNSbbfI=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "9693852a2070b398ee123a329e68f0dab5526681",
+        "rev": "e9b5094b8f6e06a46f9f53bb97a9573b7cedf2a2",
         "type": "github"
       },
       "original": {
@@ -53,6 +69,7 @@
       "inputs": {
         "flake-compat": "flake-compat",
         "flake-utils": "flake-utils",
+        "haskell-ci": "haskell-ci",
         "nixpkgs": "nixpkgs"
       }
     },
