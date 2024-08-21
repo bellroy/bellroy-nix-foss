@@ -1,8 +1,10 @@
 inputs:
 {
+  # Source directory of the project using this flake.
+  src
   # A list of compiler versions supported in the project.
   # Valid values are keys of haskell.compiler in nixpkgs.
-  supportedCompilers
+, supportedCompilers
   # Default compiler version to choose. Must be one of the supportedCompilers.
 , defaultCompiler ? builtins.head supportedCompilers
   # Additional haskell packages whose deps should be included in the
@@ -37,6 +39,15 @@ let
     in
     haskellPackages.haskell-ci;
 
+  checks.pre-commit-check = inputs.pre-commit-hooks.lib.${system}.run {
+    inherit src;
+    hooks = {
+      hlint.enable = true;
+      nixpkgs-fmt.enable = true;
+      ormolu.enable = true;
+    };
+  };
+
   essentialTools = with nixpkgs; [
     cabal-install
     cabal2nix
@@ -49,9 +60,12 @@ let
   ] ++ extraTools nixpkgs;
 
   makeShell = compilerName: nixpkgs.haskell.packages.${compilerName}.shellFor {
+    inherit (checks.pre-commit-check) shellHook;
+
     # Provide zlib by default because anything non-trivial will depend on it.
     packages = hpkgs: [ hpkgs.zlib ] ++ haskellFfiPackages hpkgs;
-    nativeBuildInputs = [ essentialTools ];
+    nativeBuildInputs = [ essentialTools ]
+      ++ checks.pre-commit-check.enabledPackages;
   };
 in
 {
