@@ -2,11 +2,15 @@
   # Use 'nix flake show' to discover the structure of the output.
   # Multiple versions of compiler is supported.
   inputs = {
-    nixpkgs.url = "nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils";
-    flake-compat = {
-      url = "github:edolstra/flake-compat";
+    haskell-ci = {
+      url = "github:haskell-ci/haskell-ci";
       flake = false;
+    };
+    nixpkgs.url = "nixpkgs/nixpkgs-unstable";
+    pre-commit-hooks = {
+      inputs.nixpkgs.follows = "nixpkgs";
+      url = "github:cachix/pre-commit-hooks.nix";
     };
   };
 

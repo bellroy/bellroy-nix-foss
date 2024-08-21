@@ -1,8 +1,10 @@
 inputs:
 {
+  # Source directory of the project using this flake.
+  src
   # A list of compiler versions supported in the project.
   # Valid values are keys of haskell.compiler in nixpkgs.
-  supportedCompilers
+, supportedCompilers
   # Default compiler version to choose. Must be one of the supportedCompilers.
 , defaultCompiler ? builtins.head supportedCompilers
   # Additional haskell packages whose deps should be included in the
@@ -18,6 +20,34 @@ inputs.flake-utils.lib.eachDefaultSystem (system:
 let
   nixpkgs = import inputs.nixpkgs { inherit system; };
 
+  haskell-ci =
+    let
+      # Hopefully many of these overrides become redundant in future
+      # dependency update cycles, as the default version in
+      # `nixpkgs.haskellPackages` become compatible with `haskell-ci`.
+      haskellPackages = nixpkgs.haskellPackages.override {
+        overrides = hfinal: hprev: with nixpkgs.haskell.lib.compose; {
+          aeson = doJailbreak hprev.aeson_2_2_2_0;
+          base-compat = hprev.base-compat_0_14_0;
+          haskell-ci = doJailbreak (hprev.callCabal2nix "haskell-ci" inputs.haskell-ci { });
+          lattices = doJailbreak hprev.lattices;
+          primitive = dontCheck hprev.primitive_0_9_0_0;
+          ShellCheck = hprev.ShellCheck_0_9_0;
+          time-compat = doJailbreak hprev.time-compat;
+        };
+      };
+    in
+    haskellPackages.haskell-ci;
+
+  checks.pre-commit-check = inputs.pre-commit-hooks.lib.${system}.run {
+    inherit src;
+    hooks = {
+      hlint.enable = true;
+      nixpkgs-fmt.enable = true;
+      ormolu.enable = true;
+    };
+  };
+
   essentialTools = with nixpkgs; [
     cabal-install
     cabal2nix
@@ -30,9 +60,12 @@ let
   ] ++ extraTools nixpkgs;
 
   makeShell = compilerName: nixpkgs.haskell.packages.${compilerName}.shellFor {
+    inherit (checks.pre-commit-check) shellHook;
+
     # Provide zlib by default because anything non-trivial will depend on it.
     packages = hpkgs: [ hpkgs.zlib ] ++ haskellFfiPackages hpkgs;
-    nativeBuildInputs = [ essentialTools ];
+    nativeBuildInputs = [ essentialTools ]
+      ++ checks.pre-commit-check.enabledPackages;
   };
 in
 {
