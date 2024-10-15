@@ -33,11 +33,10 @@ let
           # `nixpkgs.haskellPackages` become compatible with `haskell-ci`.
           haskellPackages = nixpkgs.haskellPackages.override {
             overrides = hfinal: hprev: with nixpkgs.haskell.lib.compose; {
-              aeson = doJailbreak (hprev.callHackage "aeson" "2.2.2.0" { });
+              aeson = doJailbreak hprev.aeson;
               base-compat = hprev.base-compat_0_14_0;
+              base-compat-batteries = hprev.base-compat-batteries_0_14_0;
               haskell-ci = doJailbreak (hprev.callCabal2nix "haskell-ci" inputs.haskell-ci { });
-              lattices = doJailbreak hprev.lattices;
-              primitive = dontCheck hprev.primitive_0_9_0_0;
               ShellCheck = hprev.ShellCheck_0_9_0;
               time-compat = doJailbreak hprev.time-compat;
             };
