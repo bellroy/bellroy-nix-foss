@@ -101,7 +101,7 @@ let
         constituents = builtins.concatMap
           (system:
             builtins.map
-              (ghc: "devshells.${system}.${ghc}")
+              (ghc: "devShells.${system}.${ghc}")
               supportedCompilers ++ [ "devShells.${system}.default" ]
           )
           systems;
