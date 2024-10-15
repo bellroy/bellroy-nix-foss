@@ -16,75 +16,97 @@ inputs:
   # as the argument and returns a list of packages.
 , extraTools ? nixpkgs: [ ]
 }:
-inputs.flake-utils.lib.eachDefaultSystem (system:
 let
-  nixpkgs = import inputs.nixpkgs { inherit system; };
+  evalPkgs = import inputs.nixpkgs { system = "x86_64-linux"; };
+  systems =
+    with inputs.flake-utils.lib.system;
+    [ aarch64-darwin x86_64-darwin x86_64-linux ];
 
-  haskell-ci =
+  perSystem = inputs.flake-utils.lib.eachSystem systems (system:
     let
-      # Hopefully many of these overrides become redundant in future
-      # dependency update cycles, as the default version in
-      # `nixpkgs.haskellPackages` become compatible with `haskell-ci`.
-      haskellPackages = nixpkgs.haskellPackages.override {
-        overrides = hfinal: hprev: with nixpkgs.haskell.lib.compose; {
-          aeson = doJailbreak (hprev.callHackage "aeson" "2.2.2.0" { });
-          base-compat = hprev.base-compat_0_14_0;
-          haskell-ci = doJailbreak (hprev.callCabal2nix "haskell-ci" inputs.haskell-ci { });
-          lattices = doJailbreak hprev.lattices;
-          primitive = dontCheck hprev.primitive_0_9_0_0;
-          ShellCheck = hprev.ShellCheck_0_9_0;
-          time-compat = doJailbreak hprev.time-compat;
+      nixpkgs = import inputs.nixpkgs { inherit system; };
+
+      haskell-ci =
+        let
+          # Hopefully many of these overrides become redundant in future
+          # dependency update cycles, as the default version in
+          # `nixpkgs.haskellPackages` become compatible with `haskell-ci`.
+          haskellPackages = nixpkgs.haskellPackages.override {
+            overrides = hfinal: hprev: with nixpkgs.haskell.lib.compose; {
+              aeson = doJailbreak hprev.aeson;
+              base-compat = hprev.base-compat_0_14_0;
+              base-compat-batteries = hprev.base-compat-batteries_0_14_0;
+              haskell-ci = doJailbreak (hprev.callCabal2nix "haskell-ci" inputs.haskell-ci { });
+              ShellCheck = hprev.ShellCheck_0_9_0;
+              time-compat = doJailbreak hprev.time-compat;
+            };
+          };
+        in
+        haskellPackages.haskell-ci;
+
+      checks.pre-commit-check = inputs.pre-commit-hooks.lib.${system}.run {
+        inherit src;
+        hooks = {
+          cabal-fmt.enable = true;
+          hlint.enable = true;
+          nixpkgs-fmt.enable = true;
+          ormolu.enable = true;
         };
       };
+
+      essentialTools = with nixpkgs; [
+        cabal-install
+        cabal2nix
+        haskell-ci
+        haskellPackages.cabal-fmt
+        haskellPackages.haskell-language-server
+        hlint
+        nixpkgs-fmt
+        ormolu
+      ] ++ extraTools nixpkgs;
+
+      makeShell = compilerName: nixpkgs.haskell.packages.${compilerName}.shellFor {
+        inherit (checks.pre-commit-check) shellHook;
+
+        # Provide zlib by default because anything non-trivial will depend on it.
+        packages = hpkgs: [ hpkgs.zlib ] ++ haskellFfiPackages hpkgs;
+        nativeBuildInputs = [ essentialTools ]
+          ++ checks.pre-commit-check.enabledPackages;
+      };
     in
-    haskellPackages.haskell-ci;
+    {
+      devShells =
+        let
+          devShellsWithoutDefault =
+            builtins.listToAttrs
+              (
+                builtins.map
+                  (compilerName: {
+                    name = compilerName;
+                    value = makeShell compilerName;
+                  })
+                  supportedCompilers
+              );
+        in
+        devShellsWithoutDefault // {
+          default = devShellsWithoutDefault.${defaultCompiler};
+        };
+    }
+  );
 
-  checks.pre-commit-check = inputs.pre-commit-hooks.lib.${system}.run {
-    inherit src;
-    hooks = {
-      cabal-fmt.enable = true;
-      hlint.enable = true;
-      nixpkgs-fmt.enable = true;
-      ormolu.enable = true;
-    };
-  };
-
-  essentialTools = with nixpkgs; [
-    cabal-install
-    cabal2nix
-    haskell-ci
-    haskellPackages.cabal-fmt
-    haskellPackages.haskell-language-server
-    hlint
-    nixpkgs-fmt
-    ormolu
-  ] ++ extraTools nixpkgs;
-
-  makeShell = compilerName: nixpkgs.haskell.packages.${compilerName}.shellFor {
-    inherit (checks.pre-commit-check) shellHook;
-
-    # Provide zlib by default because anything non-trivial will depend on it.
-    packages = hpkgs: [ hpkgs.zlib ] ++ haskellFfiPackages hpkgs;
-    nativeBuildInputs = [ essentialTools ]
-      ++ checks.pre-commit-check.enabledPackages;
-  };
-in
-{
-  devShells =
-    let
-      devShellsWithoutDefault =
-        builtins.listToAttrs
-          (
+  hydraJobs = {
+    aggregate = evalPkgs.runCommand "aggregate"
+      {
+        _hydraAggregate = true;
+        constituents = builtins.concatMap
+          (system:
             builtins.map
-              (compilerName: {
-                name = compilerName;
-                value = makeShell compilerName;
-              })
-              supportedCompilers
-          );
-    in
-    devShellsWithoutDefault // {
-      default = devShellsWithoutDefault.${defaultCompiler};
-    };
-}
-)
+              (ghc: "devshells.${system}.${ghc}")
+              supportedCompilers ++ [ "devShells.${system}.default" ]
+          )
+          systems;
+      }
+      "touch $out";
+  } // { inherit (perSystem) devShells; };
+in
+perSystem // { inherit hydraJobs; }
