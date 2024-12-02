@@ -59,6 +59,7 @@ let
         cabal2nix
         haskell-ci
         haskellPackages.cabal-fmt
+        haskellPackages.ghcid
         haskellPackages.haskell-language-server
         hlint
         nixpkgs-fmt
