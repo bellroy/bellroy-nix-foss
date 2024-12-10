@@ -26,24 +26,6 @@ let
     let
       nixpkgs = import inputs.nixpkgs { inherit system; };
 
-      haskell-ci =
-        let
-          # Hopefully many of these overrides become redundant in future
-          # dependency update cycles, as the default version in
-          # `nixpkgs.haskellPackages` become compatible with `haskell-ci`.
-          haskellPackages = nixpkgs.haskellPackages.override {
-            overrides = hfinal: hprev: with nixpkgs.haskell.lib.compose; {
-              aeson = doJailbreak hprev.aeson;
-              base-compat = hprev.base-compat_0_14_0;
-              base-compat-batteries = hprev.base-compat-batteries_0_14_0;
-              haskell-ci = doJailbreak (hprev.callCabal2nix "haskell-ci" inputs.haskell-ci { });
-              ShellCheck = hprev.ShellCheck_0_9_0;
-              time-compat = doJailbreak hprev.time-compat;
-            };
-          };
-        in
-        haskellPackages.haskell-ci;
-
       checks.pre-commit-check = inputs.pre-commit-hooks.lib.${system}.run {
         inherit src;
         hooks = {
@@ -57,7 +39,6 @@ let
       essentialTools = with nixpkgs; [
         cabal-install
         cabal2nix
-        haskell-ci
         haskellPackages.cabal-fmt
         haskellPackages.ghcid
         haskellPackages.haskell-language-server
