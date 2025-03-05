@@ -4,14 +4,11 @@
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
     nixpkgs.url = "nixpkgs/nixpkgs-unstable";
-    pre-commit-hooks = {
+    git-hooks = {
       inputs.nixpkgs.follows = "nixpkgs";
-      url = "github:cachix/pre-commit-hooks.nix";
+      url = "github:cachix/git-hooks.nix";
     };
   };
 
-  outputs = inputs:
-    {
-      lib.haskellProject = import ./haskell-project.nix inputs;
-    };
+  outputs = inputs: { lib.haskellProject = import ./haskell-project.nix inputs; };
 }
