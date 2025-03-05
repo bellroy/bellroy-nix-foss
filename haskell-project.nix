@@ -26,7 +26,7 @@ let
     let
       nixpkgs = import inputs.nixpkgs { inherit system; };
 
-      checks.pre-commit-check = inputs.pre-commit-hooks.lib.${system}.run {
+      checks.pre-commit-check = inputs.git-hooks.lib.${system}.run {
         inherit src;
         hooks = {
           cabal-fmt.enable = true;
