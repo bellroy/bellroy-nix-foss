@@ -10,8 +10,5 @@
     };
   };
 
-  outputs = inputs:
-    {
-      lib.haskellProject = import ./haskell-project.nix inputs;
-    };
+  outputs = inputs: { lib.haskellProject = import ./haskell-project.nix inputs; };
 }
