@@ -31,7 +31,7 @@ let
         hooks = {
           cabal-fmt.enable = true;
           hlint.enable = true;
-          nixpkgs-fmt.enable = true;
+          nixfmt-rfc-style.enable = true;
           ormolu.enable = true;
         };
       };
