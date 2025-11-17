@@ -15,6 +15,9 @@ inputs:
   # Extra tools to include in the shell. This is a function that takes nixpkgs
   # as the argument and returns a list of packages.
   extraTools ? nixpkgs: [ ],
+  # Customizes the attrset being passed to 'hooks' in https://github.com/cachix/git-hooks.nix.
+  # Use this to add new pre-commit hooks or override default hooks enabled by this function.
+  preCommitHooks ? { },
 }:
 let
   evalPkgs = import inputs.nixpkgs { system = "x86_64-linux"; };
@@ -36,7 +39,8 @@ let
           hlint.enable = true;
           nixfmt-rfc-style.enable = true;
           ormolu.enable = true;
-        };
+        }
+        // preCommitHooks;
       };
 
       essentialTools =
@@ -86,6 +90,9 @@ let
         ++ [ "devShells.${system}.default" ]
       ) systems;
     } "touch $out";
-  } // { inherit (perSystem) devShells; };
+  }
+  // {
+    inherit (perSystem) devShells;
+  };
 in
 perSystem // { inherit hydraJobs; }
