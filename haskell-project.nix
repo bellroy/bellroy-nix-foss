@@ -12,12 +12,12 @@ inputs:
   # packages with native dependencies. That ensures the provided GHC
   # can find necessary native libraries on NixOS.
   haskellFfiPackages ? hpkgs: [ ],
-  # Extra tools to include in the shell. This is a function that takes nixpkgs
+  # Extra tools to include in the shell. This is a function that takes pkgs (all packages in nixpkgs)
   # as the argument and returns a list of packages.
-  extraTools ? nixpkgs: [ ],
+  extraTools ? pkgs: [ ],
   # Customizes the attrset being passed to 'hooks' in https://github.com/cachix/git-hooks.nix.
   # Use this to add new pre-commit hooks or override default hooks enabled by this function.
-  preCommitHooks ? { },
+  preCommitHooks ? pkgs: { },
 }:
 let
   evalPkgs = import inputs.nixpkgs { system = "x86_64-linux"; };
@@ -30,7 +30,7 @@ let
   perSystem = inputs.flake-utils.lib.eachSystem systems (
     system:
     let
-      nixpkgs = import inputs.nixpkgs { inherit system; };
+      pkgs = import inputs.nixpkgs { inherit system; };
 
       checks.pre-commit-check = inputs.git-hooks.lib.${system}.run {
         inherit src;
@@ -40,11 +40,11 @@ let
           nixfmt-rfc-style.enable = true;
           ormolu.enable = true;
         }
-        // preCommitHooks;
+        // preCommitHooks pkgs;
       };
 
       essentialTools =
-        with nixpkgs;
+        with pkgs;
         [
           cabal-install
           cabal2nix
@@ -55,11 +55,11 @@ let
           nixpkgs-fmt
           ormolu
         ]
-        ++ extraTools nixpkgs;
+        ++ extraTools pkgs;
 
       makeShell =
         compilerName:
-        nixpkgs.haskell.packages.${compilerName}.shellFor {
+        pkgs.haskell.packages.${compilerName}.shellFor {
           inherit (checks.pre-commit-check) shellHook;
 
           # Provide zlib by default because anything non-trivial will depend on it.
