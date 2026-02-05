@@ -66,9 +66,6 @@ let
           packages = hpkgs: [ hpkgs.zlib ] ++ haskellFfiPackages hpkgs;
           nativeBuildInputs = [ essentialTools ] ++ checks.pre-commit-check.enabledPackages;
         };
-      install-pre-commit-checks = pkgs.writeShellScriptBin "install-pre-commit-checks" ''
-        ${checks.pre-commit-check.shellHook}
-      '';
     in
     {
       devShells =
@@ -82,9 +79,12 @@ let
         in
         devShellsWithoutDefault // { default = devShellsWithoutDefault.${defaultCompiler}; };
 
-      apps.install-pre-commit-checks = {
-        type = "app";
-        program = "${install-pre-commit-checks}/bin/install-pre-commit-checks";
+      packages.install-pre-commit-checks = pkgs.writeShellScriptBin "install-pre-commit-checks" ''
+        ${checks.pre-commit-check.shellHook}
+      '';
+
+      apps.install-pre-commit-checks = inputs.flake-utils.lib.mkApp {
+        drv = inputs.self.packages.${system}.install-pre-commit-checks;
       };
     }
   );
