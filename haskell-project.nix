@@ -64,7 +64,7 @@ let
 
           # Provide zlib by default because anything non-trivial will depend on it.
           packages = hpkgs: [ hpkgs.zlib ] ++ haskellFfiPackages hpkgs;
-          nativeBuildInputs = [ essentialTools ] ++ checks.pre-commit-check.enabledPackages;
+          nativeBuildInputs = essentialTools ++ checks.pre-commit-check.enabledPackages;
         };
 
       install-pre-commit-checks = pkgs.writeShellScriptBin "install-pre-commit-checks" ''
