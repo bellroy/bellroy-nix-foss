@@ -35,7 +35,7 @@ let
       checks.pre-commit-check = inputs.git-hooks.lib.${system}.run {
         inherit src;
         hooks = {
-          cabal-fmt.enable = true;
+          cabal-gild.enable = true;
           hlint.enable = true;
           nixfmt.enable = true;
           ormolu.enable = true;
@@ -48,7 +48,7 @@ let
         [
           cabal-install
           cabal2nix
-          haskellPackages.cabal-fmt
+          haskellPackages.cabal-gild
           haskellPackages.ghcid
           haskellPackages.haskell-language-server
           hlint
